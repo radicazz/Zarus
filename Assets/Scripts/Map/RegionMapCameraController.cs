@@ -20,7 +20,7 @@ namespace Zarus.Map
         private float zoomSpeed = 0.15f;
 
         [SerializeField]
-        private float panSpeed = 0.0025f;
+        private float panSpeed = 0.001f;
 
         [SerializeField]
         private float focusLerpSpeed = 5f;
@@ -175,10 +175,25 @@ namespace Zarus.Map
                 {
                     var delta = pointerPosition - previousPointerPosition;
                     previousPointerPosition = pointerPosition;
-                    var normalizedDelta = new Vector2(-delta.x / Screen.height, -delta.y / Screen.height);
-                    var scaledDelta = new Vector3(normalizedDelta.x * targetCamera.orthographicSize * panSpeed * Screen.height,
-                                                  normalizedDelta.y * targetCamera.orthographicSize * panSpeed * Screen.height,
+                    
+                    // Apply deadzone to prevent micro-movements from causing drift
+                    var deadzone = 2f; // pixels
+                    if (delta.magnitude < deadzone)
+                    {
+                        return;
+                    }
+                    
+                    // More controlled and less sensitive panning calculation
+                    var normalizedDelta = new Vector2(-delta.x / Screen.width, -delta.y / Screen.height);
+                    var scaleFactor = Mathf.Clamp(targetCamera.orthographicSize / 10f, 0.1f, 2f);
+                    var scaledDelta = new Vector3(normalizedDelta.x * targetCamera.orthographicSize * panSpeed * scaleFactor,
+                                                  normalizedDelta.y * targetCamera.orthographicSize * panSpeed * scaleFactor,
                                                   0f);
+                    
+                    // Apply maximum movement per frame to prevent jumps
+                    var maxMovePerFrame = targetCamera.orthographicSize * 0.1f;
+                    scaledDelta = Vector3.ClampMagnitude(scaledDelta, maxMovePerFrame);
+                    
                     targetPosition += scaledDelta;
                 }
             }
@@ -196,13 +211,22 @@ namespace Zarus.Map
         private Vector3 ClampPosition(Vector3 desired)
         {
             var bounds = mapController.GetWorldBounds();
+            
+            // Calculate camera bounds at current zoom level
+            var cameraHeight = targetCamera.orthographicSize;
+            var cameraWidth = cameraHeight * targetCamera.aspect;
+            
+            // Account for padding and camera bounds
             var extents = bounds.extents;
-            extents.x = Mathf.Max(0.01f, extents.x - clampPadding.x);
-            extents.y = Mathf.Max(0.01f, extents.y - clampPadding.y);
+            extents.x = Mathf.Max(cameraWidth, extents.x - clampPadding.x);
+            extents.y = Mathf.Max(cameraHeight, extents.y - clampPadding.y);
+            
             var min = bounds.center - extents;
             var max = bounds.center + extents;
+            
             desired.x = Mathf.Clamp(desired.x, min.x, max.x);
             desired.y = Mathf.Clamp(desired.y, min.y, max.y);
+            
             return desired;
         }
 

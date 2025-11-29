@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -71,6 +72,19 @@ namespace Zarus.Map
 
         [SerializeField]
         private bool highlightSelection = true;
+
+        [Header("Map Positioning")]
+        [SerializeField]
+        private bool useManualPositioning = true;
+
+        [SerializeField, Range(-10f, 10f)]
+        private float manualOffsetX = 0f;
+
+        [SerializeField, Range(-10f, 10f)]
+        private float manualOffsetY = 0f;
+
+        [SerializeField]
+        private bool autoUpdatePosition = true;
 
         [Header("Debug")]
         [SerializeField]
@@ -146,13 +160,21 @@ namespace Zarus.Map
         }
 
 #if UNITY_EDITOR
-        private void OnValidate()
+private void OnValidate()
         {
             if (!isActiveAndEnabled || pendingRebuild)
             {
                 return;
             }
 
+            // Handle real-time positioning updates during play mode
+            if (autoUpdatePosition && useManualPositioning && Application.isPlaying)
+            {
+                CenterMapForUI();
+                return;
+            }
+
+            // Handle editor-time rebuilds
             pendingRebuild = true;
             // Defer GameObject operations to avoid "SendMessage cannot be called during OnValidate" errors
             EditorApplication.delayCall += HandleDeferredRebuild;
@@ -367,7 +389,7 @@ namespace Zarus.Map
             }
         }
 
-        private void HandlePointer()
+private void HandlePointer()
         {
             if (!enableHover && !enableSelection)
             {
@@ -381,6 +403,13 @@ namespace Zarus.Map
             }
 
             if (!TryGetPointerPosition(out var pointerPosition, out var pressedThisFrame))
+            {
+                ClearHover();
+                return;
+            }
+
+            // Check if pointer is over UI elements - if so, don't process province clicks
+            if (IsPointerOverUI(pointerPosition))
             {
                 ClearHover();
                 return;
@@ -412,6 +441,55 @@ namespace Zarus.Map
                 }
             }
         }
+
+/// <summary>
+        /// Checks if the pointer is over any UI elements, preventing province clicks through UI.
+        /// Handles both mouse and touch input properly.
+        /// </summary>
+        private bool IsPointerOverUI(Vector2 pointerPosition)
+        {
+            // Check if EventSystem exists
+            if (EventSystem.current == null)
+            {
+                return false;
+            }
+
+            // For mouse input
+            var mouse = Mouse.current;
+            if (mouse != null)
+            {
+                return EventSystem.current.IsPointerOverGameObject();
+            }
+
+            // For touch input, we need to check each active touch
+            var touch = Touchscreen.current;
+            if (touch != null)
+            {
+                var primary = touch.primaryTouch;
+                if (primary.press.isPressed)
+                {
+                    // For touch, we need to provide the touch ID
+                    var touchId = primary.touchId.ReadValue();
+                    return EventSystem.current.IsPointerOverGameObject((int)touchId);
+                }
+            }
+
+            // WebGL fallback - check using legacy input system
+            #if UNITY_WEBGL && !UNITY_EDITOR
+            if (Input.touchSupported && Input.touchCount > 0)
+            {
+                var touchId = Input.GetTouch(0).fingerId;
+                return EventSystem.current.IsPointerOverGameObject(touchId);
+            }
+            else
+            {
+                return EventSystem.current.IsPointerOverGameObject();
+            }
+            #endif
+
+            return false;
+        }
+
 
         private bool TryGetPointerPosition(out Vector2 position, out bool clicked)
         {
@@ -571,31 +649,36 @@ namespace Zarus.Map
                 return;
             }
 
-            // HUD dimensions (should match the values from MainTheme.uss and ProvincePanelController)
-            const float topHudHeight = 48f;
-            const float bottomHudHeight = 56f;
+            // Simply center the map at the camera's position in the XY plane
+            var cameraPosition = interactionCamera.transform.position;
+            var targetPosition = new Vector3(cameraPosition.x, cameraPosition.y, 0f);
             
-            // Calculate available screen space
-            var screenHeight = Screen.height;
-            var availableHeight = screenHeight - topHudHeight - bottomHudHeight;
-            var availableCenterY = topHudHeight + (availableHeight * 0.5f);
+            // Add manual positioning offsets if enabled
+            if (useManualPositioning)
+            {
+                targetPosition.x += manualOffsetX;
+                targetPosition.y += manualOffsetY;
+                
+                // Apply bounds checking to prevent map from going too far offscreen
+                var cameraHeight = interactionCamera.orthographicSize;
+                var cameraWidth = cameraHeight * interactionCamera.aspect;
+                
+                // Allow map to move but keep some portion visible
+                var maxOffset = cameraWidth * 0.8f; // Allow 80% of screen width offset
+                targetPosition.x = Mathf.Clamp(targetPosition.x, 
+                    cameraPosition.x - maxOffset, 
+                    cameraPosition.x + maxOffset);
+                targetPosition.y = Mathf.Clamp(targetPosition.y, 
+                    cameraPosition.y - cameraHeight * 0.8f, // Even less Y movement to account for UI
+                    cameraPosition.y + cameraHeight * 0.8f);
+            }
             
-            // Convert screen center to world position
-            var screenCenter = new Vector3(Screen.width * 0.5f, availableCenterY, interactionCamera.nearClipPlane + 10f);
-            var worldCenter = interactionCamera.ScreenToWorldPoint(screenCenter);
+            regionContainer.position = targetPosition;
             
-            // Get map bounds to calculate offset needed
-            var mapWorldBounds = GetWorldBounds();
-            var currentMapCenter = mapWorldBounds.center;
-            
-            // Calculate offset to center the map
-            var offset = worldCenter - currentMapCenter;
-            offset.z = 0f; // Keep Z position unchanged
-            
-            // Apply the centering offset
-            regionContainer.position += offset;
-            
-            Debug.Log($"[RegionMapController] Centered map in UI space. Available height: {availableHeight}px, Center Y: {availableCenterY}px, Offset: {offset}");
+            if (Application.isEditor && Time.frameCount % 60 == 0) // Log only once per second to avoid spam
+            {
+                Debug.Log($"[RegionMapController] Centered map at position: {targetPosition}. Manual offsets: ({manualOffsetX}, {manualOffsetY})");
+            }
         }
 
         /// <summary>
