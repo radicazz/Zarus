@@ -127,6 +127,9 @@ namespace Zarus.UI
             UpdateTimer();
             
             Debug.Log($"[GameHUD] Modern bottom bar initialization complete.");
+            
+            // Ensure the HUD is visible on start
+            Show();
         }
 
         private void UpdateTimer()

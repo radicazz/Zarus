@@ -46,6 +46,7 @@ namespace Zarus.UI
         // State
         private RegionEntry currentProvince;
         private bool isVisible;
+        private bool deploymentInProgress; // Flag to prevent race conditions during deployment
 
         private void Awake()
         {
@@ -97,6 +98,8 @@ namespace Zarus.UI
 
         private void InitializeUI()
         {
+            Debug.Log("[ProvincePanelController] InitializeUI called");
+            
             if (uiDocument == null || uiDocument.rootVisualElement == null)
             {
                 Debug.LogError("[ProvincePanelController] UIDocument or root element is null!");
@@ -104,6 +107,12 @@ namespace Zarus.UI
             }
 
             root = uiDocument.rootVisualElement.Q<VisualElement>("ProvincePanelRoot");
+            if (root == null)
+            {
+                Debug.LogError("[ProvincePanelController] ProvincePanelRoot not found in UXML!");
+                return;
+            }
+            
             provinceNameLabel = root?.Q<Label>("ProvinceNameLabel");
             infectionValueLabel = root?.Q<Label>("InfectionValueLabel");
             outpostStatusLabel = root?.Q<Label>("OutpostStatusLabel");
@@ -112,9 +121,17 @@ namespace Zarus.UI
             deployOutpostButton = root?.Q<Button>("DeployOutpostButton");
             outpostCostLabel = root?.Q<Label>("OutpostCostLabel");
 
+            Debug.LogFormat("[ProvincePanelController] UI elements found: Button={0}, Root={1}", 
+                deployOutpostButton != null, root != null);
+
             if (deployOutpostButton != null)
             {
                 deployOutpostButton.clicked += OnDeployClicked;
+                Debug.Log("[ProvincePanelController] Deploy button click event registered");
+            }
+            else
+            {
+                Debug.LogError("[ProvincePanelController] DeployOutpostButton not found!");
             }
         }
 
@@ -146,17 +163,25 @@ namespace Zarus.UI
             }
         }
 
-        private void OnProvinceSelected(RegionEntry province)
+private void OnProvinceSelected(RegionEntry province)
         {
+            Debug.LogFormat("[ProvincePanelController] Province selected: {0}", 
+                province?.RegionId ?? "NULL");
+            
             if (province == null)
             {
-                Hide();
+                // Only hide if not in the middle of a deployment
+                if (!deploymentInProgress)
+                {
+                    Hide();
+                }
                 return;
             }
 
             currentProvince = province;
             Show();
             RefreshProvinceData();
+            Debug.LogFormat("[ProvincePanelController] Province panel shown for {0}", province.RegionId);
         }
 
         private void OnProvinceStateChanged(ProvinceInfectionState state)
@@ -363,17 +388,47 @@ namespace Zarus.UI
             }
         }
 
-        private void OnDeployClicked()
+private void OnDeployClicked()
         {
-            if (currentProvince == null || outbreakSimulation == null)
+            // Capture province at click time to avoid race conditions
+            var targetProvince = currentProvince;
+            
+            Debug.LogFormat("[ProvincePanelController] Deploy button clicked for province: {0}", 
+                targetProvince?.RegionId ?? "NULL");
+            
+            if (targetProvince == null)
             {
+                Debug.LogError("[ProvincePanelController] currentProvince is null! This shouldn't happen if the panel is visible.");
+                return;
+            }
+            
+            if (outbreakSimulation == null)
+            {
+                Debug.LogError("[ProvincePanelController] outbreakSimulation is null!");
                 return;
             }
 
-            if (outbreakSimulation.TryBuildOutpost(currentProvince.RegionId, out _, out _))
+            // Set deployment flag to prevent interference
+            deploymentInProgress = true;
+            
+            Debug.LogFormat("[ProvincePanelController] Calling TryBuildOutpost for {0}...", targetProvince.RegionId);
+            if (outbreakSimulation.TryBuildOutpost(targetProvince.RegionId, out _, out _))
             {
+                Debug.LogFormat("[ProvincePanelController] Successfully deployed outpost in {0}!", targetProvince.RegionId);
+                
+                // Keep the panel open and province selected after successful deployment
                 RefreshProvinceData();
+                
+                // Keep the province selected by ensuring we don't clear the selection
+                // The panel should remain visible and the camera should not zoom out
             }
+            else
+            {
+                Debug.LogFormat("[ProvincePanelController] Failed to deploy outpost in {0}", targetProvince.RegionId);
+            }
+            
+            // Clear deployment flag but maintain selection
+            deploymentInProgress = false;
         }
 
         private void UpdatePanelPosition()
@@ -454,7 +509,14 @@ namespace Zarus.UI
             }
 
             isVisible = false;
-            currentProvince = null;
+            
+            // Don't clear currentProvince immediately to avoid race conditions with button clicks
+            // Only clear it when we're sure no deployment is in progress
+            if (!deploymentInProgress)
+            {
+                currentProvince = null;
+            }
+            
             root.RemoveFromClassList("province-panel--visible");
             
             // Use schedule to avoid immediate removal during animation
@@ -463,8 +525,19 @@ namespace Zarus.UI
                 if (!isVisible)
                 {
                     root.AddToClassList("hidden");
+                    // Clear province reference after animation if not in deployment
+                    if (!deploymentInProgress)
+                    {
+                        currentProvince = null;
+                    }
                 }
             }).StartingIn(200); // Wait for transition
         }
-    }
+    
+
+/// <summary>
+        /// Returns true if a deployment is currently in progress
+        /// </summary>
+        public bool IsDeploymentInProgress => deploymentInProgress;
+}
 }

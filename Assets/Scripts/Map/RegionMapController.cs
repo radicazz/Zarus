@@ -389,7 +389,7 @@ private void OnValidate()
             }
         }
 
-private void HandlePointer()
+        private void HandlePointer()
         {
             if (!enableHover && !enableSelection)
             {
@@ -409,9 +409,16 @@ private void HandlePointer()
             }
 
             // Check if pointer is over UI elements - if so, don't process province clicks
+            // BUT: Don't clear selection on click if we have a current selection (to prevent race condition with world-space UI)
             if (IsPointerOverUI(pointerPosition))
             {
                 ClearHover();
+                // Don't clear selection when clicking if we have an active selection - let world-space UI handle the click first
+                if (pressedThisFrame && currentSelection != null)
+                {
+                    // Defer selection clearing to next frame to allow UI button events to process first
+                    StartCoroutine(DeferredSelectionClear());
+                }
                 return;
             }
 
@@ -566,7 +573,7 @@ private void HandlePointer()
             currentHover = null;
         }
 
-        private void SetSelection(RegionRuntime runtime)
+private void SetSelection(RegionRuntime runtime)
         {
             // Check if clicking on already selected province to deselect
             if (currentSelection == runtime)
@@ -579,6 +586,7 @@ private void HandlePointer()
             if (!highlightSelection)
             {
                 onRegionSelected?.Invoke(runtime.Entry);
+                // Allow normal zoom behavior when selecting provinces
                 autoFocusController?.FocusOnRegion(runtime.Entry);
                 return;
             }
@@ -591,6 +599,7 @@ private void HandlePointer()
             currentSelection = runtime;
             currentSelection?.UpdateColor(currentSelection.Entry.VisualStyle.SelectedColor, false, colorTransitionDuration);
             onRegionSelected?.Invoke(runtime.Entry);
+            // Allow normal zoom behavior when selecting provinces
             autoFocusController?.FocusOnRegion(runtime.Entry);
         }
 
@@ -770,6 +779,48 @@ private void HandlePointer()
             }
 
             return Color.Lerp(baseColor, maxInfectionColor, infection);
+        }
+
+        /// <summary>
+        /// Deferred selection clearing to prevent race condition with world-space UI button clicks
+        /// </summary>
+/// <summary>
+        /// Deferred selection clearing to prevent race condition with world-space UI button clicks
+        /// </summary>
+/// <summary>
+        /// Deferred selection clearing to prevent race condition with world-space UI button clicks
+        /// </summary>
+/// <summary>
+        /// Deferred selection clearing to prevent race condition with world-space UI button clicks
+        /// </summary>
+/// <summary>
+        /// Deferred selection clearing to prevent race condition with world-space UI button clicks
+        /// </summary>
+        private System.Collections.IEnumerator DeferredSelectionClear()
+        {
+            yield return new WaitForEndOfFrame();
+            
+            // Check if we have a province panel that might be handling a deployment
+            var provincePanelController = FindFirstObjectByType<MonoBehaviour>();
+            var hasDeploymentInProgress = false;
+            
+            if (provincePanelController != null && provincePanelController.name.Contains("ProvincePanelController"))
+            {
+                // Use reflection to check deployment status to avoid assembly reference issues
+                var deploymentProperty = provincePanelController.GetType().GetProperty("IsDeploymentInProgress");
+                if (deploymentProperty != null)
+                {
+                    hasDeploymentInProgress = (bool)deploymentProperty.GetValue(provincePanelController);
+                }
+            }
+            
+            // Only clear if selection still exists and no UI consumed the click
+            // Also don't clear if a deployment is in progress
+            if (currentSelection != null && !hasDeploymentInProgress)
+            {
+                ClearSelection();
+                autoFocusController?.FocusOnWholeMap();
+            }
         }
 
         [Serializable]

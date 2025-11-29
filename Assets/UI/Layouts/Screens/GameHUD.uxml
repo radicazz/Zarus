@@ -20,6 +20,20 @@
                 <ui:Label name="TimerDetail" text="Jan 1st 2025" class="top-hud__tertiary-text" />
             </ui:VisualElement>
             
+            <!-- Center Section - Budget & Progress -->
+            <ui:VisualElement name="CenterSection" class="top-hud__section" style="flex-direction: row; align-items: center; justify-content: center; flex: 1;">
+                <!-- Budget -->
+                <ui:VisualElement style="flex-direction: row; align-items: center; margin-right: 24px;">
+                    <ui:Label text="BUDGET" class="top-hud__hint" style="margin-right: 6px; margin-bottom: 0;" />
+                    <ui:Label name="ZarBalanceLabel" text="R 1,000" class="top-hud__primary-text" />
+                </ui:VisualElement>
+                <!-- Cure Progress -->
+                <ui:VisualElement style="flex-direction: row; align-items: center;">
+                    <ui:Label text="CURE" class="top-hud__hint" style="margin-right: 6px; margin-bottom: 0;" />
+                    <ui:Label name="CureProgressDetailsLabel" text="0%" class="top-hud__secondary-text" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            
             <!-- Right Section - Game Controls (Inline) -->
             <ui:VisualElement name="GameControlsSection" class="top-hud__section--right" style="align-items: center;">
                 <ui:Label text="ESC - Menu" class="top-hud__hint" style="margin-right: 8px;" />
@@ -31,24 +45,19 @@
         <!-- Bottom Bar -->
         <ui:VisualElement name="BottomBar" class="bottom-hud">
             
-            <!-- Left Section - Budget (Inline) -->
-            <ui:VisualElement name="BudgetSection" class="bottom-hud__section" style="flex-direction: row; align-items: center;">
-                <ui:Label text="BUDGET" class="bottom-hud__label" style="margin-right: 6px; margin-bottom: 0;" />
-                <ui:Label name="ZarBalanceLabel" text="R 1,000" class="bottom-hud__primary-text" />
+            <!-- Left Section - Province Info -->
+            <ui:VisualElement name="ProvinceSection" class="bottom-hud__section" style="flex-direction: row; align-items: center;">
+                <ui:Label text="Province Details" class="bottom-hud__secondary-text" />
             </ui:VisualElement>
             
-            <!-- Center Section - Cure Progress (More Compact) -->
-            <ui:VisualElement name="CureSection" class="bottom-hud__section--center" style="align-items: center;">
-                <ui:VisualElement style="flex-direction: row; align-items: center; margin-bottom: 2px;">
-                    <ui:Label text="CURE PROGRESS" class="bottom-hud__label" style="margin-right: 8px; margin-bottom: 0;" />
-                    <ui:Label name="CureProgressDetailsLabel" text="0% • 0 outposts" class="bottom-hud__secondary-text" />
-                </ui:VisualElement>
-                <ui:ProgressBar lowValue="0" highValue="100" value="0" name="CureProgressBar" class="bottom-hud__progress-bar" style="margin: 2px 0;" />
-            </ui:VisualElement>
-            
-            <!-- Right Section - Status Info -->
-            <ui:VisualElement name="StatusSection" class="bottom-hud__section--right" style="align-items: center; justify-content: flex-end;">
+            <!-- Center Section - Main Action Area -->
+            <ui:VisualElement name="ActionSection" class="bottom-hud__section--center" style="align-items: center;">
                 <ui:Label text="Select province for details" class="bottom-hud__status-hint" />
+            </ui:VisualElement>
+            
+            <!-- Right Section - Action Buttons -->
+            <ui:VisualElement name="ButtonSection" class="bottom-hud__section--right" style="align-items: center; justify-content: flex-end;">
+                <ui:Label text="Ready" class="bottom-hud__secondary-text" />
             </ui:VisualElement>
             
         </ui:VisualElement>

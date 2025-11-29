@@ -77,7 +77,26 @@ namespace Zarus.Systems
         [Tooltip("Starting national ZAR budget for deploying outposts.")]
         private int startingZarBalance = 150;
 
+        
+        [Header("Viral Spread Configuration")]
+        [SerializeField]
+        [Tooltip("Infection threshold (0-1) at which a province can spread to neighbors.")]
+        private float spreadThreshold = 0.45f;
+
+        [SerializeField]
+        [Tooltip("Base spread rate per hour to neighboring provinces.")]
+        private float baseSpreadRate = 0.015f;
+
+        [SerializeField]
+        [Tooltip("Multiplier for spread aggressiveness (1.0 = medium, 0.5 = slow, 2.0 = fast).")]
+        private float spreadAggressivenessMultiplier = 1.0f;
+
+        [SerializeField]
+        [Tooltip("Province adjacency data for neighbor-based spreading.")]
+        private ProvinceAdjacencyData adjacencyData;
+
         [Header("Outbreak Hotspots")]
+[Header("Outbreak Hotspots")]
         [SerializeField]
         [Tooltip("Number of provinces that start with higher infection.")]
         private int hotspotCount = 2;
@@ -135,7 +154,9 @@ namespace Zarus.Systems
         private int lastSimulatedDayIndex = 1;
         private int lastSummaryDayIndex;
         private int lastIncomeDay;
-        private PlayerUpgrades playerUpgrades;
+        
+        private bool isSpreadingEnabled;
+private PlayerUpgrades playerUpgrades;
 
         public IReadOnlyDictionary<string, ProvinceInfectionState> Provinces => provinces;
         public GlobalCureState GlobalState => globalState;
@@ -158,6 +179,14 @@ namespace Zarus.Systems
             }
 
             playerUpgrades = new PlayerUpgrades();
+            
+            // Initialize adjacency data
+            if (adjacencyData == null)
+            {
+                adjacencyData = new ProvinceAdjacencyData();
+            }
+            
+            isSpreadingEnabled = true;
 
             globalState = new GlobalCureState
             {
@@ -219,6 +248,8 @@ namespace Zarus.Systems
 
             var minSeed = Mathf.Clamp01(Mathf.Min(initialInfectionRange.x, initialInfectionRange.y));
             var maxSeed = Mathf.Clamp01(Mathf.Max(initialInfectionRange.x, initialInfectionRange.y));
+            
+            // Initialize all provinces with minimal baseline infection
             foreach (var entry in entries)
             {
                 if (entry == null || string.IsNullOrEmpty(entry.RegionId))
@@ -255,6 +286,12 @@ namespace Zarus.Systems
             initialized = true;
             cureCompleteRaised = false;
             allProvincesFullyInfectedRaised = false;
+            
+            if (logSummaryToConsole)
+            {
+                Debug.LogFormat("[OutbreakSimulation] Initialized {0} provinces with neighbor-based spreading enabled (threshold: {1:P0})",
+                    provinces.Count, spreadThreshold);
+            }
         }
 
         private void OnTimeUpdated(InGameTimeSnapshot snapshot)
@@ -348,6 +385,9 @@ namespace Zarus.Systems
                     RaiseProvinceStateChanged(state);
                 }
             }
+            
+            // Process viral spread between neighboring provinces
+            ProcessViralSpread(deltaHours);
 
             UpdateGlobalCure(deltaHours);
             ProcessDailyIncome(dayIndex);
@@ -362,6 +402,79 @@ namespace Zarus.Systems
                 AllProvincesFullyInfected?.Invoke();
             }
         }
+
+        /// <summary>
+        /// Processes viral spreading from infected provinces to their neighbors.
+        /// </summary>
+        private void ProcessViralSpread(float deltaHours)
+        {
+            if (!isSpreadingEnabled || deltaHours <= 0f || adjacencyData == null)
+            {
+                return;
+            }
+
+            var spreadEvents = new List<(string sourceProvince, string targetProvince, float spreadAmount)>();
+            
+            // Find provinces above spread threshold that can infect neighbors
+            foreach (var sourceState in provinces.Values)
+            {
+                if (sourceState.Infection01 < spreadThreshold || sourceState.IsFullyInfected)
+                {
+                    continue;
+                }
+                
+                var neighbors = adjacencyData.GetNeighbors(sourceState.RegionId);
+                foreach (var neighborId in neighbors)
+                {
+                    if (!provinces.TryGetValue(neighborId, out var targetState))
+                    {
+                        continue;
+                    }
+                    
+                    // Calculate spread amount based on source infection level and time
+                    var spreadMultiplier = (sourceState.Infection01 - spreadThreshold) / (1f - spreadThreshold);
+                    var spreadAmount = baseSpreadRate * spreadMultiplier * spreadAggressivenessMultiplier * deltaHours;
+                    
+                    // Reduce spread if target is already heavily infected
+                    var targetResistance = 1f - (targetState.Infection01 * 0.5f);
+                    spreadAmount *= targetResistance;
+                    
+                    if (spreadAmount > 0.001f) // Only apply meaningful spread
+                    {
+                        spreadEvents.Add((sourceState.RegionId, neighborId, spreadAmount));
+                    }
+                }
+            }
+            
+            // Apply all spread events
+            var totalSpreadEvents = 0;
+            foreach (var (sourceId, targetId, amount) in spreadEvents)
+            {
+                if (provinces.TryGetValue(targetId, out var targetState))
+                {
+                    var previousInfection = targetState.Infection01;
+                    targetState.Infection01 = Mathf.Clamp01(targetState.Infection01 + amount);
+                    
+                    if (Mathf.Abs(targetState.Infection01 - previousInfection) > 0.001f)
+                    {
+                        RaiseProvinceStateChanged(targetState);
+                        totalSpreadEvents++;
+                        
+                        if (logSummaryToConsole && amount > 0.01f)
+                        {
+                            Debug.LogFormat("[Viral Spread] {0} → {1}: +{2:P1} (now {3:P1})",
+                                sourceId, targetId, amount, targetState.Infection01);
+                        }
+                    }
+                }
+            }
+            
+            if (logSummaryToConsole && totalSpreadEvents > 0)
+            {
+                Debug.LogFormat("[OutbreakSimulation] Processed {0} viral spread events this step", totalSpreadEvents);
+            }
+        }
+
 
         private void UpdateGlobalCure(float deltaHours)
         {
@@ -455,21 +568,36 @@ namespace Zarus.Systems
             return true;
         }
 
-        public bool TryBuildOutpost(string regionId, out int costR, out OutpostBuildError error)
+public bool TryBuildOutpost(string regionId, out int costR, out OutpostBuildError error)
         {
+            Debug.LogFormat("[OutbreakSimulation] TryBuildOutpost called for province: {0}", regionId);
+            
             if (!CanBuildOutpost(regionId, out costR, out error))
             {
+                Debug.LogFormat("[OutbreakSimulation] Cannot build outpost in {0}: {1} (Cost: R{2}, Balance: R{3})", 
+                    regionId, error, costR, globalState?.ZarBalance ?? 0);
                 return false;
             }
 
             var state = provinces[regionId];
+            var previousBalance = globalState.ZarBalance;
+            var previousOutpostCount = state.OutpostCount;
+            
             globalState.ZarBalance -= costR;
             state.OutpostCount++;
             state.OutpostDisabled = state.Infection01 >= virusRates.OutpostDisableThreshold01;
             state.IsFullyInfected = state.Infection01 >= virusRates.FullyInfectedThreshold01;
 
+            Debug.LogFormat("[OutbreakSimulation] Outpost deployed in {0}! Cost: R{1}, Balance: R{2}→R{3}, Outposts: {4}→{5}",
+                regionId, costR, previousBalance, globalState.ZarBalance, previousOutpostCount, state.OutpostCount);
+
+            // Ensure all state changes are propagated immediately
             RaiseProvinceStateChanged(state);
-            UpdateGlobalCure(0f);
+            UpdateGlobalCure(0f); // This will call RaiseGlobalStateChanged internally
+            
+            // Force immediate update of global state to ensure HUD refreshes
+            RaiseGlobalStateChanged();
+            
             EvaluateWinLoss(lastSimulatedDayIndex);
             return true;
         }

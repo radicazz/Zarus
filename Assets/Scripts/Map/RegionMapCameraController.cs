@@ -70,7 +70,7 @@ namespace Zarus.Map
             ApplyCameraState();
         }
 
-        public void FocusOnRegion(RegionEntry entry)
+public void FocusOnRegion(RegionEntry entry, bool shouldZoom = true)
         {
             if (entry == null || mapController == null || targetCamera == null)
             {
@@ -78,8 +78,14 @@ namespace Zarus.Map
             }
 
             var worldPos = mapController.GetWorldPosition(entry.Centroid);
-            // Zoom in 2x further than the minimum ortho size
-            targetOrthoSize = Mathf.Max(minOrthoSize / 2f, 0.5f); // Ensure a reasonable minimum
+            
+            // Only zoom if explicitly requested
+            if (shouldZoom)
+            {
+                // Zoom in 2x further than the minimum ortho size
+                targetOrthoSize = Mathf.Max(minOrthoSize / 2f, 0.5f); // Ensure a reasonable minimum
+            }
+            
             targetPosition = ApplyViewportBias(new Vector3(worldPos.x, worldPos.y, transform.position.z), targetOrthoSize);
 
             if (clampToBounds && mapController != null)
