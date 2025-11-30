@@ -7,7 +7,7 @@
     
     <ui:Style src="../../Styles/MainTheme.uss" />
     
-    <!-- Split HUD - Top & Bottom -->
+    <!-- HUD Root -->
     <ui:VisualElement name="GameHUDRoot" class="split-hud-container">
         
         <!-- Top Bar -->
@@ -20,47 +20,21 @@
                 <ui:Label name="TimerDetail" text="Jan 1st 2025" class="top-hud__tertiary-text" />
             </ui:VisualElement>
             
-            <!-- Center Section - Budget & Progress -->
+            <!-- Center Section - Budget only -->
             <ui:VisualElement name="CenterSection" class="top-hud__section" style="flex-direction: row; align-items: center; justify-content: center; flex: 1;">
-                <!-- Budget -->
-                <ui:VisualElement style="flex-direction: row; align-items: center; margin-right: 24px;">
+                <ui:VisualElement style="flex-direction: row; align-items: center;">
                     <ui:Label text="BUDGET" class="top-hud__hint" style="margin-right: 6px; margin-bottom: 0;" />
                     <ui:Label name="ZarBalanceLabel" text="R 1,000" class="top-hud__primary-text" />
                 </ui:VisualElement>
-                <!-- Cure Progress -->
-                <ui:VisualElement style="flex-direction: column; align-items: center;">
-                    <ui:VisualElement style="flex-direction: row; align-items: center;">
-                        <ui:Label text="CURE" class="top-hud__hint" style="margin-right: 6px; margin-bottom: 0;" />
-                        <ui:Label name="CureProgressDetailsLabel" text="0%" class="top-hud__secondary-text" />
-                    </ui:VisualElement>
-                    <ui:ProgressBar name="CureProgressBar" value="0" title="0%" style="min-width: 120px; margin-top: 4px;" />
+            </ui:VisualElement>
+            
+            <!-- Right Section - Status Chips + ESC hint -->
+            <ui:VisualElement name="GameControlsSection" class="top-hud__section--right" style="flex-direction: column; align-items: flex-end;">
+                <ui:VisualElement class="top-hud__chips">
+                    <ui:Label name="InfectionSummaryLabel" text="Infected 0%" class="top-hud__chip" />
+                    <ui:Label name="CureSummaryLabel" text="Cure 0%" class="top-hud__chip top-hud__chip--accent" />
                 </ui:VisualElement>
-            </ui:VisualElement>
-            
-            <!-- Right Section - Game Controls (Inline) -->
-            <ui:VisualElement name="GameControlsSection" class="top-hud__section--right" style="align-items: center;">
-                <ui:Label text="ESC - Menu" class="top-hud__hint" style="margin-right: 8px;" />
-                <ui:Button name="OpenUpgradesButton" text="Research Lab" class="top-hud__button" style="margin-right: 0;" />
-            </ui:VisualElement>
-            
-        </ui:VisualElement>
-        
-        <!-- Bottom Bar -->
-        <ui:VisualElement name="BottomBar" class="bottom-hud">
-            
-            <!-- Left Section - Province Info -->
-            <ui:VisualElement name="ProvinceSection" class="bottom-hud__section" style="flex-direction: row; align-items: center;">
-                <ui:Label text="Province Details" class="bottom-hud__secondary-text" />
-            </ui:VisualElement>
-            
-            <!-- Center Section - Main Action Area -->
-            <ui:VisualElement name="ActionSection" class="bottom-hud__section--center" style="align-items: center;">
-                <ui:Label text="Select province for details" class="bottom-hud__status-hint" />
-            </ui:VisualElement>
-            
-            <!-- Right Section - Action Buttons -->
-            <ui:VisualElement name="ButtonSection" class="bottom-hud__section--right" style="align-items: center; justify-content: flex-end;">
-                <ui:Label text="Ready" class="bottom-hud__secondary-text" />
+                <ui:Label text="ESC - Menu" class="top-hud__hint" style="margin-top: 4px;" />
             </ui:VisualElement>
             
         </ui:VisualElement>
@@ -71,7 +45,7 @@
         </ui:VisualElement>
         
         <!-- Modal Host for Overlays -->
-        <ui:VisualElement name="ModalHost" class="modal-host hidden" />
+        <ui:VisualElement name="ModalHost" class="modal-host hud-modal-host hidden" />
         
     </ui:VisualElement>
     

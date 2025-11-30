@@ -31,13 +31,12 @@ namespace Zarus.UI
         private VisualTreeAsset upgradePanelTemplate;
 
         // UI Elements (Bottom Bar Design)
-        private ProgressBar cureProgressBar;
-        private Label cureProgressDetailsLabel;
+        private Label infectionSummaryLabel;
+        private Label cureSummaryLabel;
         private Label zarBalanceLabel;
         private Label timerValue;
         private Label timerSubValueLabel;
         private Label timerDetailLabel;
-        private Button openUpgradesButton;
         private VisualElement incomeToast;
         private Label incomeToastText;
         private VisualElement modalHost;
@@ -73,17 +72,17 @@ namespace Zarus.UI
             timerValue = root.Q<Label>("TimerValue");
             timerSubValueLabel = root.Q<Label>("TimerSubValue");
             timerDetailLabel = root.Q<Label>("TimerDetail");
-            cureProgressBar = root.Q<ProgressBar>("CureProgressBar");
-            cureProgressDetailsLabel = root.Q<Label>("CureProgressDetailsLabel");
+            infectionSummaryLabel = root.Q<Label>("InfectionSummaryLabel");
+            cureSummaryLabel = root.Q<Label>("CureSummaryLabel");
             zarBalanceLabel = root.Q<Label>("ZarBalanceLabel");
-            openUpgradesButton = root.Q<Button>("OpenUpgradesButton");
             incomeToast = root.Q<VisualElement>("IncomeToast");
             incomeToastText = root.Q<Label>("IncomeToastText");
             modalHost = root.Q<VisualElement>("ModalHost");
 
             // Verify essential elements
             if (timerValue == null) Debug.LogWarning("[GameHUD] TimerValue not found - time display may not work");
-            if (cureProgressBar == null) Debug.LogWarning("[GameHUD] CureProgressBar not found - cure progress may not display");
+            if (infectionSummaryLabel == null) Debug.LogWarning("[GameHUD] InfectionSummaryLabel not found - infection status may not display");
+            if (cureSummaryLabel == null) Debug.LogWarning("[GameHUD] CureSummaryLabel not found - cure status may not display");
             if (zarBalanceLabel == null) Debug.LogWarning("[GameHUD] ZarBalanceLabel not found - budget may not display");
 
             // Find components if not assigned
@@ -116,15 +115,11 @@ namespace Zarus.UI
                 Debug.LogWarning("[GameHUD] DayNightCycleController not found; timer display will not work.");
             }
 
-            if (openUpgradesButton != null)
-            {
-                openUpgradesButton.clicked += OnOpenUpgradesClicked;
-            }
-
             HookOutbreakSimulationEvents();
 
             // Initialize displays
             UpdateTimer();
+            UpdateGlobalSummaries();
             
             Debug.Log($"[GameHUD] Modern bottom bar initialization complete.");
             
@@ -224,35 +219,20 @@ namespace Zarus.UI
             outbreakSimulation.GlobalStateChanged += HandleGlobalStateChanged;
             outbreakSimulation.DailyIncomeReceived += HandleDailyIncomeReceived;
             simulationEventsHooked = true;
+            outbreakSimulation.ProvinceStateChanged += HandleProvinceStateChanged;
 
             if (outbreakSimulation.GlobalState != null)
             {
                 HandleGlobalStateChanged(outbreakSimulation.GlobalState);
             }
+
+            UpdateGlobalSummaries();
         }
 
         private void HandleGlobalStateChanged(GlobalCureState state)
         {
             latestGlobalState = state;
-            var progress01 = state != null ? Mathf.Clamp01(state.CureProgress01) : 0f;
-            var progressPercent = progress01 * 100f;
-
-            if (cureProgressBar != null)
-            {
-                cureProgressBar.value = progressPercent;
-                cureProgressBar.title = string.Format(CultureInfo.InvariantCulture, "{0:0}%", progressPercent);
-            }
-
-            var activeOutposts = state?.ActiveOutpostCount ?? 0;
-            var totalOutposts = state?.TotalOutpostCount ?? 0;
-
-            if (cureProgressDetailsLabel != null)
-            {
-                cureProgressDetailsLabel.text = string.Format(CultureInfo.InvariantCulture,
-                    "{0:0}% complete • {1} outposts active",
-                    progressPercent,
-                    activeOutposts);
-            }
+            UpdateGlobalSummaries();
 
             if (zarBalanceLabel != null)
             {
@@ -261,7 +241,32 @@ namespace Zarus.UI
             }
         }
 
-        private void OnOpenUpgradesClicked()
+        private void HandleProvinceStateChanged(ProvinceInfectionState state)
+        {
+            UpdateGlobalSummaries();
+        }
+
+        private void UpdateGlobalSummaries()
+        {
+            var curePercent = latestGlobalState != null
+                ? Mathf.Clamp01(latestGlobalState.CureProgress01) * 100f
+                : 0f;
+
+            if (cureSummaryLabel != null)
+            {
+                cureSummaryLabel.text = string.Format(CultureInfo.InvariantCulture, "Cure {0:0}%", curePercent);
+            }
+
+            var infection01 = outbreakSimulation != null ? outbreakSimulation.GetAverageInfection01() : 0f;
+            var infectionPercent = Mathf.Clamp01(infection01) * 100f;
+
+            if (infectionSummaryLabel != null)
+            {
+                infectionSummaryLabel.text = string.Format(CultureInfo.InvariantCulture, "Infected {0:0}%", infectionPercent);
+            }
+        }
+
+        public void OpenUpgradePanel()
         {
             if (upgradePanelController != null)
             {
@@ -352,13 +357,9 @@ namespace Zarus.UI
             if (simulationEventsHooked && outbreakSimulation != null)
             {
                 outbreakSimulation.GlobalStateChanged -= HandleGlobalStateChanged;
+                outbreakSimulation.ProvinceStateChanged -= HandleProvinceStateChanged;
                 outbreakSimulation.DailyIncomeReceived -= HandleDailyIncomeReceived;
                 simulationEventsHooked = false;
-            }
-
-            if (openUpgradesButton != null)
-            {
-                openUpgradesButton.clicked -= OnOpenUpgradesClicked;
             }
 
             if (upgradePanelController != null)

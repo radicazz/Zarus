@@ -26,7 +26,7 @@
             </ui:VisualElement>
             
             <!-- Upgrade Columns -->
-            <ui:VisualElement name="UpgradeColumns" class="upgrade-panel__columns">
+            <ui:ScrollView name="UpgradeColumns" class="upgrade-panel__columns" style="height: 100%;">
                 
                 <!-- Infrastructure Column -->
                 <ui:VisualElement name="InfrastructureColumn" class="upgrade-column">
@@ -189,10 +189,10 @@
                     
                 </ui:VisualElement>
                 
-            </ui:VisualElement>
-            
+            </ui:ScrollView>
+
         </ui:VisualElement>
-        
+
     </ui:VisualElement>
     
 </ui:UXML>

@@ -129,6 +129,21 @@ namespace Zarus.Systems
         [SerializeField]
         private IncomeReceivedEvent onDailyIncomeReceived = new IncomeReceivedEvent();
 
+        [Header("Province Research")]
+        [SerializeField]
+        private int provinceResearchBaseCost = 80;
+
+        [SerializeField]
+        private int provinceResearchCostPerLevel = 40;
+
+        [SerializeField]
+        [Range(1, 10)]
+        private int provinceResearchMaxLevel = 5;
+
+        [SerializeField]
+        [Range(0.01f, 0.5f)]
+        private float provinceResearchInfectionReduction = 0.05f;
+
         public event Action<ProvinceInfectionState> ProvinceStateChanged;
         public event Action<GlobalCureState> GlobalStateChanged;
         public event Action AllProvincesFullyInfected;
@@ -157,6 +172,8 @@ namespace Zarus.Systems
         
         private bool isSpreadingEnabled;
 private PlayerUpgrades playerUpgrades;
+        private readonly Dictionary<string, int> provinceResearchLevels =
+            new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         public IReadOnlyDictionary<string, ProvinceInfectionState> Provinces => provinces;
         public GlobalCureState GlobalState => globalState;
@@ -716,6 +733,83 @@ public bool TryBuildOutpost(string regionId, out int costR, out OutpostBuildErro
                 active,
                 total,
                 budget);
+        }
+
+        public float GetAverageInfection01()
+        {
+            if (provinces.Count == 0)
+            {
+                return 0f;
+            }
+
+            float infectionSum = 0f;
+            foreach (var state in provinces.Values)
+            {
+                infectionSum += Mathf.Clamp01(state.Infection01);
+            }
+
+            return Mathf.Clamp01(infectionSum / provinces.Count);
+        }
+
+        public int GetProvinceResearchLevel(string regionId)
+        {
+            if (string.IsNullOrEmpty(regionId))
+            {
+                return 0;
+            }
+
+            return provinceResearchLevels.TryGetValue(regionId, out var level) ? level : 0;
+        }
+
+        public int GetNextProvinceResearchCost(string regionId)
+        {
+            if (string.IsNullOrEmpty(regionId))
+            {
+                return 0;
+            }
+
+            var level = GetProvinceResearchLevel(regionId);
+            if (level >= provinceResearchMaxLevel)
+            {
+                return 0;
+            }
+
+            return Mathf.Max(0, provinceResearchBaseCost + provinceResearchCostPerLevel * level);
+        }
+
+        public bool TryInvestProvinceResearch(string regionId, out int cost, out int newLevel)
+        {
+            cost = 0;
+            newLevel = GetProvinceResearchLevel(regionId);
+
+            if (string.IsNullOrEmpty(regionId) || globalState == null)
+            {
+                return false;
+            }
+
+            if (newLevel >= provinceResearchMaxLevel)
+            {
+                return false;
+            }
+
+            cost = GetNextProvinceResearchCost(regionId);
+            if (globalState.ZarBalance < cost)
+            {
+                return false;
+            }
+
+            globalState.ZarBalance -= cost;
+            newLevel++;
+            provinceResearchLevels[regionId] = newLevel;
+
+            if (provinces.TryGetValue(regionId, out var state))
+            {
+                state.Infection01 = Mathf.Clamp01(state.Infection01 - provinceResearchInfectionReduction);
+                RaiseProvinceStateChanged(state);
+            }
+
+            RaiseGlobalStateChanged();
+            return true;
         }
 
         private void RaiseProvinceStateChanged(ProvinceInfectionState state)

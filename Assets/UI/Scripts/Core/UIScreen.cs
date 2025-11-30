@@ -124,6 +124,12 @@ namespace Zarus.UI
             }
 
             rootElement = uiDocument.rootVisualElement;
+            rootElement.style.flexGrow = 1f;
+            rootElement.style.flexShrink = 0f;
+            rootElement.style.width = new Length(100, LengthUnit.Percent);
+            rootElement.style.height = new Length(100, LengthUnit.Percent);
+            rootElement.style.minHeight = new Length(100, LengthUnit.Percent);
+            rootElement.StretchToParentSize();
             Initialize();
             isInitialized = true;
 

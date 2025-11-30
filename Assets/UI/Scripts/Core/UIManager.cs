@@ -281,6 +281,15 @@ namespace Zarus.UI
             gameHUD?.Hide();
         }
 
+        /// <summary>
+        /// Opens the upgrade panel via the HUD.
+        /// </summary>
+        public void OpenUpgradePanel()
+        {
+            EnsureGameHUDReference();
+            gameHUD?.OpenUpgradePanel();
+        }
+
         private void SetupCursor()
         {
             if (cursorTexture == null)

@@ -11,7 +11,7 @@
     <ui:VisualElement name="PauseMenuRoot" class="overlay-backdrop">
         
         <!-- Main Menu Panel -->
-        <ui:VisualElement name="MenuPanel" class="menu-panel slide-up">
+        <ui:VisualElement name="MenuPanel" class="menu-panel overlay-section slide-up">
             
             <!-- Title -->
             <ui:Label text="PAUSED" name="MenuTitle" class="menu-title"/>
@@ -38,7 +38,7 @@
         </ui:VisualElement>
 
         <!-- Shared Settings Panel Host -->
-        <ui:VisualElement name="SettingsPanelHost" class="panel hidden settings-panel-host" style="margin-top: 16px;" />
+        <ui:VisualElement name="SettingsPanelHost" class="panel overlay-section overlay-section--spaced hidden settings-panel-host" />
         
     </ui:VisualElement>
     

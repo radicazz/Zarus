@@ -77,6 +77,9 @@ namespace Zarus.Map
         [SerializeField]
         private bool useManualPositioning = true;
 
+        [SerializeField]
+        private bool inheritEditorAlignment = true;
+
         [SerializeField, Range(-10f, 10f)]
         private float manualOffsetX = 0f;
 
@@ -85,6 +88,8 @@ namespace Zarus.Map
 
         [SerializeField]
         private bool autoUpdatePosition = true;
+
+        private bool alignmentCaptured;
 
         [Header("Debug")]
         [SerializeField]
@@ -138,6 +143,8 @@ namespace Zarus.Map
                 interactionCamera = Camera.main;
             }
 
+            CaptureEditorAlignmentFromScene();
+
             ResolveEntries();
             BuildRuntimeRegions();
         }
@@ -166,6 +173,13 @@ private void OnValidate()
             {
                 return;
             }
+
+            if (!Application.isPlaying)
+            {
+                alignmentCaptured = false;
+            }
+
+            CaptureEditorAlignmentFromScene();
 
             // Handle real-time positioning updates during play mode
             if (autoUpdatePosition && useManualPositioning && Application.isPlaying)
@@ -658,6 +672,8 @@ private void SetSelection(RegionRuntime runtime)
                 return;
             }
 
+            CaptureEditorAlignmentFromScene();
+
             // Simply center the map at the camera's position in the XY plane
             var cameraPosition = interactionCamera.transform.position;
             var targetPosition = new Vector3(cameraPosition.x, cameraPosition.y, 0f);
@@ -696,6 +712,31 @@ private void SetSelection(RegionRuntime runtime)
         public void RecenterMapForUI()
         {
             CenterMapForUI();
+        }
+
+        private void CaptureEditorAlignmentFromScene()
+        {
+            if (alignmentCaptured || !inheritEditorAlignment)
+            {
+                return;
+            }
+
+            if (regionContainer == null)
+            {
+                return;
+            }
+
+            var cam = interactionCamera != null ? interactionCamera : Camera.main;
+            if (cam == null)
+            {
+                return;
+            }
+
+            var cameraPosition = cam.transform.position;
+            manualOffsetX = Mathf.Clamp(regionContainer.position.x - cameraPosition.x, -10f, 10f);
+            manualOffsetY = Mathf.Clamp(regionContainer.position.y - cameraPosition.y, -10f, 10f);
+            useManualPositioning = true;
+            alignmentCaptured = true;
         }
 
         public void SetInteractionEnabled(bool enabled)

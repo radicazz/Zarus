@@ -44,6 +44,15 @@
             <ui:Label name="OutpostCostLabel" text="Cost: R 26" class="province-panel__cost" />
         </ui:VisualElement>
         
+        <!-- Province Research Section -->
+        <ui:VisualElement name="ProvinceResearch" class="province-panel__research">
+            <ui:Label text="Province Research" class="province-panel__section-title" />
+            <ui:Label name="ResearchLevelLabel" text="Level 0" class="province-panel__note" />
+            <ui:Button name="InvestResearchButton" text="Invest Research" class="province-action-button province-action-button--accent" />
+            <ui:Label name="ResearchCostLabel" text="Cost: R 80" class="province-panel__cost" />
+            <ui:Label class="province-panel__hint" text="Investing slows infection and boosts local cure work." />
+        </ui:VisualElement>
+        
         <!-- Connector Arrow (visual indicator pointing to province) -->
         <ui:VisualElement name="PanelConnector" class="province-panel__connector" />
         

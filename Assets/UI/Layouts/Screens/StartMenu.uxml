@@ -8,7 +8,7 @@
     <ui:Style src="../../Styles/MainTheme.uss" />
 
     <ui:VisualElement name="StartMenuRoot" class="overlay-backdrop">
-        <ui:VisualElement name="MenuPanel" class="menu-panel slide-up">
+        <ui:VisualElement name="MenuPanel" class="menu-panel overlay-section slide-up">
             <ui:Label name="GameTitle" class="menu-title" text="ZARUS" />
             <ui:Label name="GameSubtitle" class="menu-subtitle" text="Navigate South Africa's provinces and master the map." />
 
@@ -20,14 +20,28 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <ui:VisualElement name="TutorialPanel" class="panel hidden" style="margin-top: 16px;">
-            <ui:Label class="menu-title" text="How to Play" style="font-size: 24px;" />
-            <ui:Label class="menu-subtitle" text="Pan across the region map, hover provinces for details, and complete objectives before time runs out." style="margin-bottom: 12px;" />
-            <ui:Label class="menu-subtitle" text="Left mouse selects, mouse wheel zooms, and ESC opens the pause/settings menu." style="font-size: 16px;" />
-            <ui:Button name="CloseTutorialButton" class="button button--secondary menu-button" text="Close" style="margin-top: 16px;" />
+        <ui:VisualElement name="TutorialPanel" class="panel overlay-section overlay-section--spaced tutorial-panel hidden">
+            <ui:Label class="menu-title" text="How to Play" style="font-size: 28px;" />
+            <ui:Label class="menu-subtitle tutorial-panel__intro" text="Zarus is a strategic response sim. Keep infections contained while balancing research and budget." />
+
+            <ui:VisualElement class="tutorial-panel__section">
+                <ui:Label class="tutorial-panel__heading" text="Core Controls" />
+                <ui:Label class="tutorial-panel__text" text="• Left mouse selects provinces and UI buttons." />
+                <ui:Label class="tutorial-panel__text" text="• Mouse wheel zooms, hold right mouse to pan the map." />
+                <ui:Label class="tutorial-panel__text" text="• ESC pauses the game, opens settings, or returns to the menu." />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="tutorial-panel__section">
+                <ui:Label class="tutorial-panel__heading" text="Objectives" />
+                <ui:Label class="tutorial-panel__text" text="• Hover a province to see infection, population, and threat data." />
+                <ui:Label class="tutorial-panel__text" text="• Deploy outposts to slow outbreaks and spend ZAR wisely." />
+                <ui:Label class="tutorial-panel__text" text="• Research upgrades from the HUD to boost cure progress." />
+            </ui:VisualElement>
+
+            <ui:Button name="CloseTutorialButton" class="button button--secondary menu-button tutorial-panel__close" text="Close" />
         </ui:VisualElement>
 
-        <ui:VisualElement name="SettingsPanelHost" class="panel hidden settings-panel-host" style="margin-top: 16px;" />
+        <ui:VisualElement name="SettingsPanelHost" class="panel overlay-section overlay-section--spaced hidden settings-panel-host" />
     </ui:VisualElement>
 
 </ui:UXML>

@@ -32,9 +32,6 @@ namespace Zarus.Map
         private Vector2 clampPadding = new Vector2(0.5f, 0.5f);
 
         [SerializeField]
-        private Vector2 wholeMapViewOffset = new Vector2(-0.35f, 0f); // normalized viewport bias (ratio of visible extents) to keep map away from HUD
-
-        [SerializeField]
         private bool drawDebugBounds;
 
         private Camera targetCamera;
@@ -86,7 +83,7 @@ public void FocusOnRegion(RegionEntry entry, bool shouldZoom = true)
                 targetOrthoSize = Mathf.Max(minOrthoSize / 2f, 0.5f); // Ensure a reasonable minimum
             }
             
-            targetPosition = ApplyViewportBias(new Vector3(worldPos.x, worldPos.y, transform.position.z), targetOrthoSize);
+            targetPosition = new Vector3(worldPos.x, worldPos.y, transform.position.z);
 
             if (clampToBounds && mapController != null)
             {
@@ -119,7 +116,7 @@ public void FocusOnRegion(RegionEntry entry, bool shouldZoom = true)
             var aspect = Mathf.Max(targetCamera.aspect, 0.01f);
             var requiredSize = Mathf.Max(paddedExtents.y, paddedExtents.x / aspect);
             targetOrthoSize = Mathf.Clamp(requiredSize, minOrthoSize, maxOrthoSize);
-            targetPosition = ApplyViewportBias(baseTarget, targetOrthoSize);
+            targetPosition = baseTarget;
 
             if (clampToBounds && mapController != null)
             {
@@ -131,20 +128,6 @@ public void FocusOnRegion(RegionEntry entry, bool shouldZoom = true)
                 transform.position = targetPosition;
                 targetCamera.orthographicSize = targetOrthoSize;
             }
-        }
-
-        private Vector3 ApplyViewportBias(Vector3 focusPoint, float orthoSize)
-        {
-            if (targetCamera == null)
-            {
-                return focusPoint;
-            }
-
-            var clampedOrtho = Mathf.Max(orthoSize, 0.01f);
-            var horizontalExtent = clampedOrtho * Mathf.Max(targetCamera.aspect, 0.01f);
-            var verticalExtent = clampedOrtho;
-            var offset = new Vector3(horizontalExtent * wholeMapViewOffset.x, verticalExtent * wholeMapViewOffset.y, 0f);
-            return new Vector3(focusPoint.x + offset.x, focusPoint.y + offset.y, focusPoint.z);
         }
 
         private void HandleZoom()

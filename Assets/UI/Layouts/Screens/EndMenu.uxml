@@ -8,7 +8,7 @@
     <ui:Style src="../../Styles/MainTheme.uss" />
 
     <ui:VisualElement name="EndMenuRoot" class="overlay-backdrop">
-        <ui:VisualElement name="MenuPanel" class="menu-panel slide-up">
+        <ui:VisualElement name="MenuPanel" class="menu-panel overlay-section slide-up">
             <ui:Label name="OutcomeTitleLabel" class="menu-title" text="MISSION COMPLETE" />
             <ui:Label name="OutcomeSubtitleLabel" class="menu-subtitle" text="Review your path and jump back in." />
 

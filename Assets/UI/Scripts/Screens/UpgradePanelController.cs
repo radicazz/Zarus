@@ -150,11 +150,6 @@ namespace Zarus.UI
 
         private void HandleGlobalStateChanged(GlobalCureState state)
         {
-            if (!IsVisible)
-            {
-                return;
-            }
-
             UpdateBudgetDisplay();
             RefreshAllUpgradeButtons();
         }

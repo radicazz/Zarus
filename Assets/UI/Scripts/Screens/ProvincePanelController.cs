@@ -31,7 +31,7 @@ namespace Zarus.UI
         private Vector3 worldOffset = new Vector3(0, 2f, 0);
 
         [SerializeField]
-        private Vector2 screenOffset = new Vector2(0, -100f);
+        private Vector2 screenOffset = Vector2.zero;
 
         // UI Elements
         private VisualElement root;
@@ -41,7 +41,10 @@ namespace Zarus.UI
         private Label populationLabel;
         private Label threatLevelLabel;
         private Button deployOutpostButton;
+        private Button investResearchButton;
         private Label outpostCostLabel;
+        private Label researchLevelLabel;
+        private Label researchCostLabel;
 
         // State
         private RegionEntry currentProvince;
@@ -86,6 +89,11 @@ namespace Zarus.UI
             {
                 deployOutpostButton.clicked -= OnDeployClicked;
             }
+
+            if (investResearchButton != null)
+            {
+                investResearchButton.clicked -= OnInvestResearchClicked;
+            }
         }
 
         private void LateUpdate()
@@ -119,7 +127,12 @@ namespace Zarus.UI
             populationLabel = root?.Q<Label>("PopulationLabel");
             threatLevelLabel = root?.Q<Label>("ThreatLevelLabel");
             deployOutpostButton = root?.Q<Button>("DeployOutpostButton");
+            investResearchButton = root?.Q<Button>("InvestResearchButton");
             outpostCostLabel = root?.Q<Label>("OutpostCostLabel");
+            researchLevelLabel = root?.Q<Label>("ResearchLevelLabel");
+            researchCostLabel = root?.Q<Label>("ResearchCostLabel");
+            researchLevelLabel = root?.Q<Label>("ResearchLevelLabel");
+            researchCostLabel = root?.Q<Label>("ResearchCostLabel");
 
             Debug.LogFormat("[ProvincePanelController] UI elements found: Button={0}, Root={1}", 
                 deployOutpostButton != null, root != null);
@@ -132,6 +145,15 @@ namespace Zarus.UI
             else
             {
                 Debug.LogError("[ProvincePanelController] DeployOutpostButton not found!");
+            }
+
+            if (investResearchButton != null)
+            {
+                investResearchButton.clicked += OnInvestResearchClicked;
+            }
+            else
+            {
+                Debug.LogWarning("[ProvincePanelController] InvestResearchButton not found!");
             }
         }
 
@@ -202,6 +224,60 @@ private void OnProvinceSelected(RegionEntry province)
             if (isVisible)
             {
                 UpdateDeployButton();
+                UpdateResearchDisplay();
+            }
+        }
+
+        private void OnInvestResearchClicked()
+        {
+            if (currentProvince == null || outbreakSimulation == null)
+            {
+                return;
+            }
+
+            if (outbreakSimulation.TryInvestProvinceResearch(currentProvince.RegionId, out _, out _))
+            {
+                UpdateResearchDisplay();
+                RefreshProvinceData();
+            }
+            else
+            {
+                Debug.Log("[ProvincePanelController] Unable to invest research (insufficient funds or max level reached).");
+            }
+        }
+
+        private void UpdateResearchDisplay()
+        {
+            if (researchLevelLabel == null && researchCostLabel == null)
+            {
+                return;
+            }
+
+            if (currentProvince == null || outbreakSimulation == null)
+            {
+                if (researchLevelLabel != null) researchLevelLabel.text = "Level --";
+                if (researchCostLabel != null) researchCostLabel.text = "Cost: --";
+                investResearchButton?.SetEnabled(false);
+                return;
+            }
+
+            var regionId = currentProvince.RegionId;
+            var level = outbreakSimulation.GetProvinceResearchLevel(regionId);
+            var nextCost = outbreakSimulation.GetNextProvinceResearchCost(regionId);
+
+            if (researchLevelLabel != null)
+            {
+                researchLevelLabel.text = $"Level {level}";
+            }
+
+            if (researchCostLabel != null)
+            {
+                researchCostLabel.text = nextCost > 0 ? $"Cost: R {nextCost}" : "Maxed";
+            }
+
+            if (investResearchButton != null)
+            {
+                investResearchButton.SetEnabled(nextCost > 0);
             }
         }
 
@@ -229,6 +305,8 @@ private void OnProvinceSelected(RegionEntry province)
                 UpdateThreatLevel(state);
                 UpdateDeployButton();
             }
+
+            UpdateResearchDisplay();
         }
 
         private void UpdateInfectionDisplay(ProvinceInfectionState state)
