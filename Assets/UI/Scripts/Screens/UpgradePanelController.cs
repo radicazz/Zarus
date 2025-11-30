@@ -72,6 +72,10 @@ namespace Zarus.UI
             InitializeUpgradeCard(UpgradeType.OutpostCapacity, "OutpostCapacity");
             InitializeUpgradeCard(UpgradeType.RapidDeployment, "RapidDeployment");
             InitializeUpgradeCard(UpgradeType.VaccineBreakthrough, "VaccineBreakthrough");
+            InitializeUpgradeCard(UpgradeType.ContainmentProtocols, "ContainmentProtocols");
+            InitializeUpgradeCard(UpgradeType.BorderSecurity, "BorderSecurity");
+            InitializeUpgradeCard(UpgradeType.QuarantineMeasures, "QuarantineMeasures");
+            InitializeUpgradeCard(UpgradeType.MedicalStockpiles, "MedicalStockpiles");
 
             // Subscribe to simulation events
             if (simulation != null)

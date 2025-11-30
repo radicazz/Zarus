@@ -28,9 +28,12 @@
                     <ui:Label name="ZarBalanceLabel" text="R 1,000" class="top-hud__primary-text" />
                 </ui:VisualElement>
                 <!-- Cure Progress -->
-                <ui:VisualElement style="flex-direction: row; align-items: center;">
-                    <ui:Label text="CURE" class="top-hud__hint" style="margin-right: 6px; margin-bottom: 0;" />
-                    <ui:Label name="CureProgressDetailsLabel" text="0%" class="top-hud__secondary-text" />
+                <ui:VisualElement style="flex-direction: column; align-items: center;">
+                    <ui:VisualElement style="flex-direction: row; align-items: center;">
+                        <ui:Label text="CURE" class="top-hud__hint" style="margin-right: 6px; margin-bottom: 0;" />
+                        <ui:Label name="CureProgressDetailsLabel" text="0%" class="top-hud__secondary-text" />
+                    </ui:VisualElement>
+                    <ui:ProgressBar name="CureProgressBar" value="0" title="0%" style="min-width: 120px; margin-top: 4px;" />
                 </ui:VisualElement>
             </ui:VisualElement>
             

@@ -130,6 +130,64 @@
                     </ui:VisualElement>
                     
                 </ui:VisualElement>
+
+                <!-- Containment Column -->
+                <ui:VisualElement name="ContainmentColumn" class="upgrade-column">
+                    <ui:Label text="VIRUS CONTAINMENT" class="upgrade-column__title upgrade-column__title--containment" />
+                    
+                    <!-- Containment Protocols -->
+                    <ui:VisualElement name="ContainmentProtocolsCard" class="upgrade-card" data-upgrade-type="ContainmentProtocols">
+                        <ui:VisualElement class="upgrade-card__header">
+                            <ui:Label text="Containment Protocols" name="ContainmentProtocolsName" class="upgrade-card__name" />
+                            <ui:Label text="0 / 3" name="ContainmentProtocolsLevel" class="upgrade-card__level" />
+                        </ui:VisualElement>
+                        <ui:Label text="-15% virus spread rate per level" name="ContainmentProtocolsDesc" class="upgrade-card__description" />
+                        <ui:VisualElement class="upgrade-card__footer">
+                            <ui:Label text="Cost: R 180" name="ContainmentProtocolsCost" class="upgrade-card__cost" />
+                            <ui:Button text="Upgrade" name="ContainmentProtocolsButton" class="upgrade-card__button" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    
+                    <!-- Border Security -->
+                    <ui:VisualElement name="BorderSecurityCard" class="upgrade-card" data-upgrade-type="BorderSecurity">
+                        <ui:VisualElement class="upgrade-card__header">
+                            <ui:Label text="Border Security" name="BorderSecurityName" class="upgrade-card__name" />
+                            <ui:Label text="0 / 4" name="BorderSecurityLevel" class="upgrade-card__level" />
+                        </ui:VisualElement>
+                        <ui:Label text="-10% base infection rate per level" name="BorderSecurityDesc" class="upgrade-card__description" />
+                        <ui:VisualElement class="upgrade-card__footer">
+                            <ui:Label text="Cost: R 140" name="BorderSecurityCost" class="upgrade-card__cost" />
+                            <ui:Button text="Upgrade" name="BorderSecurityButton" class="upgrade-card__button" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    
+                    <!-- Quarantine Measures -->
+                    <ui:VisualElement name="QuarantineMeasuresCard" class="upgrade-card" data-upgrade-type="QuarantineMeasures">
+                        <ui:VisualElement class="upgrade-card__header">
+                            <ui:Label text="Quarantine Measures" name="QuarantineMeasuresName" class="upgrade-card__name" />
+                            <ui:Label text="0 / 2" name="QuarantineMeasuresLevel" class="upgrade-card__level" />
+                        </ui:VisualElement>
+                        <ui:Label text="+10% spread threshold per level" name="QuarantineMeasuresDesc" class="upgrade-card__description" />
+                        <ui:VisualElement class="upgrade-card__footer">
+                            <ui:Label text="Cost: R 220" name="QuarantineMeasuresCost" class="upgrade-card__cost" />
+                            <ui:Button text="Upgrade" name="QuarantineMeasuresButton" class="upgrade-card__button" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    
+                    <!-- Medical Stockpiles -->
+                    <ui:VisualElement name="MedicalStockpilesCard" class="upgrade-card" data-upgrade-type="MedicalStockpiles">
+                        <ui:VisualElement class="upgrade-card__header">
+                            <ui:Label text="Medical Stockpiles" name="MedicalStockpilesName" class="upgrade-card__name" />
+                            <ui:Label text="0 / 3" name="MedicalStockpilesLevel" class="upgrade-card__level" />
+                        </ui:VisualElement>
+                        <ui:Label text="-5% outpost disable threshold per level" name="MedicalStockpilesDesc" class="upgrade-card__description" />
+                        <ui:VisualElement class="upgrade-card__footer">
+                            <ui:Label text="Cost: R 160" name="MedicalStockpilesCost" class="upgrade-card__cost" />
+                            <ui:Button text="Upgrade" name="MedicalStockpilesButton" class="upgrade-card__button" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    
+                </ui:VisualElement>
                 
             </ui:VisualElement>
             

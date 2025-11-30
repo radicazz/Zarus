@@ -18,7 +18,13 @@ namespace Zarus.Systems
         ResearchEfficiency,
         OutpostCapacity,
         RapidDeployment,
-        VaccineBreakthrough
+        VaccineBreakthrough,
+
+        // Virus containment upgrades (spread reduction)
+        ContainmentProtocols,
+        BorderSecurity,
+        QuarantineMeasures,
+        MedicalStockpiles
     }
 
     /// <summary>
@@ -301,6 +307,60 @@ namespace Zarus.Systems
                         MaxLevel = 2,
                         IsOneTimeBonus = false
                     }
+                },
+
+                // Virus Containment Upgrades
+                {
+                    UpgradeType.ContainmentProtocols,
+                    new UpgradeDefinition
+                    {
+                        Type = UpgradeType.ContainmentProtocols,
+                        DisplayName = "Containment Protocols",
+                        Description = "-15% virus spread rate per level",
+                        BaseCostR = 180,
+                        CostPerLevelR = 90,
+                        MaxLevel = 3,
+                        IsOneTimeBonus = false
+                    }
+                },
+                {
+                    UpgradeType.BorderSecurity,
+                    new UpgradeDefinition
+                    {
+                        Type = UpgradeType.BorderSecurity,
+                        DisplayName = "Border Security",
+                        Description = "-10% base infection rate per level",
+                        BaseCostR = 140,
+                        CostPerLevelR = 70,
+                        MaxLevel = 4,
+                        IsOneTimeBonus = false
+                    }
+                },
+                {
+                    UpgradeType.QuarantineMeasures,
+                    new UpgradeDefinition
+                    {
+                        Type = UpgradeType.QuarantineMeasures,
+                        DisplayName = "Quarantine Measures",
+                        Description = "+10% spread threshold per level",
+                        BaseCostR = 220,
+                        CostPerLevelR = 110,
+                        MaxLevel = 2,
+                        IsOneTimeBonus = false
+                    }
+                },
+                {
+                    UpgradeType.MedicalStockpiles,
+                    new UpgradeDefinition
+                    {
+                        Type = UpgradeType.MedicalStockpiles,
+                        DisplayName = "Medical Stockpiles",
+                        Description = "-5% outpost disable threshold per level",
+                        BaseCostR = 160,
+                        CostPerLevelR = 80,
+                        MaxLevel = 3,
+                        IsOneTimeBonus = false
+                    }
                 }
             };
         }
@@ -340,6 +400,17 @@ namespace Zarus.Systems
             yield return UpgradeType.OutpostCapacity;
             yield return UpgradeType.RapidDeployment;
             yield return UpgradeType.VaccineBreakthrough;
+        }
+
+        /// <summary>
+        /// Get all virus containment upgrade types.
+        /// </summary>
+        public static IEnumerable<UpgradeType> GetContainmentUpgrades()
+        {
+            yield return UpgradeType.ContainmentProtocols;
+            yield return UpgradeType.BorderSecurity;
+            yield return UpgradeType.QuarantineMeasures;
+            yield return UpgradeType.MedicalStockpiles;
         }
     }
 }

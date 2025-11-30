@@ -349,7 +349,7 @@ private PlayerUpgrades playerUpgrades;
                 var previousDisabled = state.OutpostDisabled;
                 var previousFullyInfected = state.IsFullyInfected;
 
-                var infectionIncrease = Mathf.Max(0f, virusRates.BaseInfectionPerHour) * virusStrengthFactor * deltaHours;
+                var infectionIncrease = Mathf.Max(0f, GetEffectiveBaseInfectionRate()) * virusStrengthFactor * deltaHours;
                 var localCure = 0f;
                 if (state.OutpostCount > 0 && !state.OutpostDisabled)
                 {
@@ -358,13 +358,14 @@ private PlayerUpgrades playerUpgrades;
 
                 state.Infection01 = Mathf.Clamp01(state.Infection01 + infectionIncrease - localCure);
 
+                var effectiveOutpostDisableThreshold = GetEffectiveOutpostDisableThreshold();
                 if (state.OutpostCount > 0)
                 {
-                    if (!state.OutpostDisabled && state.Infection01 >= virusRates.OutpostDisableThreshold01)
+                    if (!state.OutpostDisabled && state.Infection01 >= effectiveOutpostDisableThreshold)
                     {
                         state.OutpostDisabled = true;
                     }
-                    else if (state.OutpostDisabled && state.Infection01 < virusRates.OutpostDisableThreshold01)
+                    else if (state.OutpostDisabled && state.Infection01 < effectiveOutpostDisableThreshold)
                     {
                         state.OutpostDisabled = false;
                     }
@@ -414,11 +415,13 @@ private PlayerUpgrades playerUpgrades;
             }
 
             var spreadEvents = new List<(string sourceProvince, string targetProvince, float spreadAmount)>();
+            var effectiveSpreadThreshold = GetEffectiveSpreadThreshold();
+            var effectiveSpreadAggressiveness = GetEffectiveSpreadAggressiveness();
             
             // Find provinces above spread threshold that can infect neighbors
             foreach (var sourceState in provinces.Values)
             {
-                if (sourceState.Infection01 < spreadThreshold || sourceState.IsFullyInfected)
+                if (sourceState.Infection01 < effectiveSpreadThreshold || sourceState.IsFullyInfected)
                 {
                     continue;
                 }
@@ -432,8 +435,8 @@ private PlayerUpgrades playerUpgrades;
                     }
                     
                     // Calculate spread amount based on source infection level and time
-                    var spreadMultiplier = (sourceState.Infection01 - spreadThreshold) / (1f - spreadThreshold);
-                    var spreadAmount = baseSpreadRate * spreadMultiplier * spreadAggressivenessMultiplier * deltaHours;
+                    var spreadMultiplier = (sourceState.Infection01 - effectiveSpreadThreshold) / (1f - effectiveSpreadThreshold);
+                    var spreadAmount = baseSpreadRate * spreadMultiplier * effectiveSpreadAggressiveness * deltaHours;
                     
                     // Reduce spread if target is already heavily infected
                     var targetResistance = 1f - (targetState.Infection01 * 0.5f);
@@ -867,6 +870,42 @@ public bool TryBuildOutpost(string regionId, out int costR, out OutpostBuildErro
         {
             var vaccineBreakthroughLevel = playerUpgrades?.GetLevel(UpgradeType.VaccineBreakthrough) ?? 0;
             return 0.999f - vaccineBreakthroughLevel * 0.05f;
+        }
+
+        /// <summary>
+        /// Gets the effective virus spread aggressiveness multiplier after applying ContainmentProtocols upgrade.
+        /// </summary>
+        public float GetEffectiveSpreadAggressiveness()
+        {
+            var containmentLevel = playerUpgrades?.GetLevel(UpgradeType.ContainmentProtocols) ?? 0;
+            return spreadAggressivenessMultiplier * (1f - containmentLevel * 0.15f);
+        }
+
+        /// <summary>
+        /// Gets the effective base infection rate after applying BorderSecurity upgrade.
+        /// </summary>
+        public float GetEffectiveBaseInfectionRate()
+        {
+            var borderSecurityLevel = playerUpgrades?.GetLevel(UpgradeType.BorderSecurity) ?? 0;
+            return virusRates.BaseInfectionPerHour * (1f - borderSecurityLevel * 0.10f);
+        }
+
+        /// <summary>
+        /// Gets the effective spread threshold after applying QuarantineMeasures upgrade.
+        /// </summary>
+        public float GetEffectiveSpreadThreshold()
+        {
+            var quarantineLevel = playerUpgrades?.GetLevel(UpgradeType.QuarantineMeasures) ?? 0;
+            return spreadThreshold * (1f + quarantineLevel * 0.10f);
+        }
+
+        /// <summary>
+        /// Gets the effective outpost disable threshold after applying MedicalStockpiles upgrade.
+        /// </summary>
+        public float GetEffectiveOutpostDisableThreshold()
+        {
+            var stockpilesLevel = playerUpgrades?.GetLevel(UpgradeType.MedicalStockpiles) ?? 0;
+            return virusRates.OutpostDisableThreshold01 * (1f - stockpilesLevel * 0.05f);
         }
 
         /// <summary>
